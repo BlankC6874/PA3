@@ -1,10 +1,16 @@
+-- This file is used to configure drone (player) settings.
+-- src/drone.lua
+
+-- Define the Drone class
 local Drone = {}
 Drone.__index = Drone
 local Parts = require("src.parts")
 
+-- Drone class to represent the player's drone
 function Drone.new()
     local self = setmetatable({}, Drone)
 
+    -- Initial position and properties
     self.x, self.y = 2, 2
     self.baseSpeed = 1
     self.color = {0, 1, 0}
@@ -26,6 +32,7 @@ function Drone.new()
     return self
 end
 
+-- Update the drone's state
 function Drone:update(dt)
     -- Update highlight timers
     for k, t in pairs(self.highlightTimers) do
@@ -36,10 +43,12 @@ function Drone:update(dt)
     -- future: add timed hazards or cooldowns
 end
 
+-- Speed is determined by the chassis part
 function Drone:getSpeed()
     return self.parts.chassis.speed
 end
 
+-- Equip a new part of the specified type
 function Drone:equipPart(type, name)
     local Parts = require("src.parts")
     if Parts.catalog[type] and Parts.catalog[type][name] then
@@ -49,6 +58,7 @@ function Drone:equipPart(type, name)
     end
 end
 
+-- Handle key presses for movement and actions
 function Drone:keypressed(key)
     local moveSpeed = self:getSpeed()
     if key == "up" then self.y = math.max(1, self.y - moveSpeed) end
@@ -60,24 +70,27 @@ function Drone:keypressed(key)
     end
 end
 
+-- Draw the drone at its current position
 function Drone:draw()
     love.graphics.setColor(self.color)
     love.graphics.rectangle("fill", (self.x-1)*64, (self.y-1)*64, 64, 64)
     love.graphics.setColor(1, 1, 1)
 end
 
+-- Draw the UI for equipped parts
 function Drone:drawUI()
-    local screenHeight = love.graphics.getHeight()
-    local baseY = screenHeight - 90
+    local screenWidth = love.graphics.getWidth()
+    local baseX = screenWidth - 150  -- adjust if needed
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Equipped Parts:", 10, baseY)
+    love.graphics.print("Equipped Parts:", baseX, 10)
 
-    self:printWithFlash("Chassis: " .. self:getPartName("chassis"), 10, baseY + 20, self.highlightTimers.chassis)
-    self:printWithFlash("Tool: " .. self:getPartName("tool"), 10, baseY + 40, self.highlightTimers.tool)
-    self:printWithFlash("Chip: " .. self:getPartName("chip"), 10, baseY + 60, self.highlightTimers.chip)
+    self:printWithFlash("Chassis: " .. self:getPartName("chassis"), baseX, 30, self.highlightTimers.chassis)
+    self:printWithFlash("Tool: " .. self:getPartName("tool"), baseX, 50, self.highlightTimers.tool)
+    self:printWithFlash("Chip: " .. self:getPartName("chip"), baseX, 70, self.highlightTimers.chip)
 end
 
+-- Print text with a flashing effect based on the timer
 function Drone:printWithFlash(text, x, y, timer)
     if timer > 0 and math.floor(timer * 4) % 2 == 0 then
         love.graphics.setColor(1, 0, 0)  -- Red
@@ -87,6 +100,7 @@ function Drone:printWithFlash(text, x, y, timer)
     love.graphics.print(text, x, y)
 end
 
+-- Get the name of equipped parts
 function Drone:getPartName(partType)
     for name, data in pairs(require("src.parts").catalog[partType]) do
         if self.parts[partType] == data then

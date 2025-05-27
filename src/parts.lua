@@ -1,5 +1,6 @@
 local Parts = {}
 
+-- Define the Parts catalog with different types and their properties
 Parts.catalog = {
     chassis = {
         light = {speed = 2, armor = 1},
