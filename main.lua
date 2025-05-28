@@ -24,6 +24,7 @@ end
 -- dt is the time since the last frame
 function love.update(dt)
     drone:update(dt)
+
     for _, p in ipairs(pickups) do
         if not p.collected and p.x == drone.x and p.y == drone.y then
             drone:equipPart(p.partType, p.partName)
@@ -31,12 +32,25 @@ function love.update(dt)
         end
     end
 
-    -- WIN = if the wire just before the target is powered
-    local tx, ty = 6, 4
-    local prevX = tx - 1  -- = 5
-    if not gameWon and grid.tiles[ty] and grid.tiles[ty][prevX] == Grid.TILE.powered then
-        print("Puzzle Solved!")
-        gameWon = true
+    -- WIN CONDITION
+    local tx, ty = 7, 4 -- assuming target tile is at (7, 4)
+
+    if not gameWon and grid.tiles[ty] and grid.tiles[ty][tx] == Grid.TILE.target then
+        -- check if neighbor is powered
+        local neighbors = {
+            {x = tx - 1, y = ty}, -- <- (6,4)
+            {x = tx + 1, y = ty},
+            {x = tx, y = ty - 1},
+            {x = tx, y = ty + 1},
+        }
+
+        for _, n in ipairs(neighbors) do
+            if grid.tiles[n.y] and grid.tiles[n.y][n.x] == Grid.TILE.powered then
+                print("Puzzle Solved!")
+                gameWon = true
+                break
+            end
+        end
     end
 end
 
@@ -61,10 +75,25 @@ function love.keypressed(key)
     drone:keypressed(key)
 
     if key == "space" and drone.parts.tool.action == "repair" then
+        print("Pressed space with tool:", drone.parts.tool.action)
+
         local dx, dy = drone.x, drone.y
-        if grid.tiles[dy] and grid.tiles[dy][dx] == Grid.TILE.wire then
-            grid.tiles[dy][dx] = Grid.TILE.powered
-            print("Activated wire at", dx, dy)
+        if grid.tiles[dy] then
+            local tile = grid.tiles[dy][dx]
+
+            if tile == Grid.TILE.broken then
+                grid.tiles[dy][dx] = Grid.TILE.wire
+                print("Repaired broken wire at", dx, dy)
+            elseif tile == Grid.TILE.wire then
+                grid.tiles[dy][dx] = Grid.TILE.powered
+                print("Activated wire at", dx, dy)
+                grid:propagatePower()  -- ← THIS MUST BE HERE
+            end
         end
     end
+
+    -- Print current tile information every time you move
+    local dx, dy = drone.x, drone.y
+    local tile = grid.tiles[dy][dx]
+    print("You are on tile:", dx, dy, "Type:", tile)
 end

@@ -4,6 +4,8 @@
 -- Define the Drone class
 local Drone = {}
 Drone.__index = Drone
+
+-- Import the Parts catalog, which contains different parts and their properties
 local Parts = require("src.parts")
 
 -- Drone class to represent the player's drone
@@ -34,7 +36,7 @@ end
 
 -- Update the drone's state
 function Drone:update(dt)
-    -- Update highlight timers
+    -- Update UI highlight timers
     for k, t in pairs(self.highlightTimers) do
         if t > 0 then
             self.highlightTimers[k] = math.max(0, t - dt)
@@ -70,11 +72,23 @@ function Drone:keypressed(key)
     end
 end
 
--- Draw the drone at its current position
+-- Draw the drone at its current position, with a flashing grey edge
 function Drone:draw()
+    local px = (self.x - 1) * 64
+    local py = (self.y - 1) * 64
+
+    -- Flashing grey edge (alternates every 0.25s)
+    if math.floor(love.timer.getTime() * 4) % 2 == 0 then
+        love.graphics.setColor(0.6, 0.6, 0.6)  -- Grey
+        love.graphics.setLineWidth(4)
+        love.graphics.rectangle("line", px, py, 64, 64)
+    end
+
+    -- Drone body
     love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", (self.x-1)*64, (self.y-1)*64, 64, 64)
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", px + 8, py + 8, 48, 48)
+
+    love.graphics.setColor(1, 1, 1)  -- Reset color
 end
 
 -- Draw the UI for equipped parts

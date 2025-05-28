@@ -15,7 +15,7 @@ function Pickup.new(x, y, partType, partName)
     return self
 end
 
--- Function to update the pickup state
+-- Function to update the pickup state to the grid
 function Pickup:draw(tileSize)
     if not self.collected then
         love.graphics.setColor(1, 1, 0)

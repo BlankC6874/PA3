@@ -11,6 +11,8 @@ local TILE = {
     wire = 2,
     target = 3,
     powered = 4,
+    broken = 5, -- repairable tile
+    diodeR = 6, -- right-pointing diode
 }
 
 -- Make it accessible outside this file
@@ -34,8 +36,9 @@ function Grid.new(cols, rows, tileSize)
 
     -- puzzle layout [y][x]
     self.tiles[4][4] = TILE.source
-    self.tiles[4][5] = TILE.wire
-    self.tiles[4][6] = TILE.target
+    self.tiles[4][5] = TILE.broken
+    self.tiles[4][6] = TILE.diodeR
+    self.tiles[4][7] = TILE.target
 
     return self
 end
@@ -66,6 +69,77 @@ function Grid:draw()
             elseif t == TILE.target then
                 love.graphics.setColor(1, 0, 0)
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
+            elseif t == TILE.broken then
+                love.graphics.setColor(1, 0.5, 0)
+                love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
+            elseif t == TILE.diodeR then
+                love.graphics.setColor(0.3, 0.3, 1)
+                love.graphics.polygon("fill",
+                    tx + 16, ty + 16,
+                    tx + 48, ty + 32,
+                    tx + 16, ty + 48
+                )
+            end
+        end
+    end
+end
+
+-- When a wire is powered, check whether it's connected to a source,
+-- and if so, spread power through adjacent wires, lighting them up automatically.
+function Grid:propagatePower()
+    local visited = {}
+    local queue = {}
+
+    -- Find all source tiles and add to queue
+    for y = 1, self.rows do
+        for x = 1, self.cols do
+            if self.tiles[y][x] == Grid.TILE.source then
+                print ("Found source at", x ,y) -- DEBUG OUTPUT
+                table.insert(queue, {x = x, y = y})
+                visited[y .. "," .. x] = true
+            end
+        end
+    end
+
+    while #queue > 0 do
+        local current = table.remove(queue, 1)
+        local x, y = current.x, current.y
+
+        -- Check 4 neighbors
+        local neighbors = {
+            {x = x + 1, y = y},
+            {x = x - 1, y = y},
+            {x = x, y = y + 1},
+            {x = x, y = y - 1},
+        }
+
+        for _, n in ipairs(neighbors) do
+            if n.x >= 1 and n.x <= self.cols and n.y >= 1 and n.y <= self.rows then
+                local tileType = self.tiles[n.y][n.x]
+                local key = n.y .. "," .. n.x
+
+                if not visited[key] and (
+                    tileType == Grid.TILE.wire or
+                    tileType == Grid.TILE.powered or
+                    tileType == Grid.TILE.target or
+                    tileType == Grid.TILE.diodeR
+                ) then
+                    -- DIODE FLOW CHECK
+                    if tileType == Grid.TILE.diodeR and n.x < x then
+                        goto skip  -- skip backward flow through right diode
+                    end
+
+                    -- DEBUG OUTPUT
+                    print("Propagating to:", n.x, n.y, "type:", tileType)
+
+                    if tileType == Grid.TILE.wire or tileType == Grid.TILE.diodeR then
+                        self.tiles[n.y][n.x] = Grid.TILE.powered
+                    end
+
+                    visited[key] = true
+                    table.insert(queue, n)
+                    ::skip::
+                end
             end
         end
     end
