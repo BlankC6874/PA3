@@ -10,6 +10,7 @@ local Pickup = require("src.pickup")
 -- Self-defined constants
 local puzzleSolved = false
 local droneDead = false
+local lastHazardX, lastHazardY = nil, nil
 
 -- love.load is called once at the start of the game
 function love.load()
@@ -56,10 +57,22 @@ function love.update(dt)
         end
     end
 
-    -- HAZARD CHECK
-    if not puzzleSolved and not droneDead and drone:isInHazard(grid) then
-        print("Drone destroyed by hazard at", drone.x, drone.y)
-        droneDead = true
+    -- HAZARD CHECK: Lose 1 life per enter hazard tile
+    if not puzzleSolved and not droneDead then
+        local dx, dy = drone.x, drone.y
+        if drone:isInHazard(grid) then
+            if lastHazardX ~= dx or lastHazardY ~= dy then
+                drone.lives = drone.lives - 1
+                lastHazardX, lastHazardY = dx, dy
+                print("⚠️ Drone took damage! Lives left:", drone.lives)
+
+                if drone.lives <= 0 then
+                    droneDead = true
+                end
+            end
+        else
+            lastHazardX, lastHazardY = nil, nil  -- Reset when leaving hazard
+        end
     end
 end
 
@@ -88,6 +101,17 @@ end
 -- love.keypressed is called when a key is bound to an action
 function love.keypressed(key)
     drone:keypressed(key)
+
+    if key == "r" then
+        -- reset the constants
+        puzzleSolved = false
+        droneDead = false
+        lastHazardX, lastHazardY = nil, nil
+
+        -- reload the game state
+        love.load()
+        print("Game reset!")
+    end
 
     if key == "space" and drone.parts.tool.action == "repair" then
         print("Pressed space with tool:", drone.parts.tool.action)

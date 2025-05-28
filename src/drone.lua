@@ -16,6 +16,7 @@ function Drone.new()
     self.x, self.y = 2, 2
     self.baseSpeed = 1
     self.color = {0, 1, 0}
+    self. lives = 3  -- Number of lives
 
     -- Equip default parts
     self.parts = {
@@ -103,15 +104,17 @@ function Drone:drawUI()
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Equipped Parts:", baseX, 10)
-
     self:printWithFlash("Chassis: " .. self:getPartName("chassis"), baseX, 30, self.highlightTimers.chassis)
     self:printWithFlash("Tool: " .. self:getPartName("tool"), baseX, 50, self.highlightTimers.tool)
     self:printWithFlash("Chip: " .. self:getPartName("chip"), baseX, 70, self.highlightTimers.chip)
 
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Lives: " .. self.lives, baseX, 90)
+
     -- Hazard warning
     if self:isInHazard(require("src.grid").instance) then
         love.graphics.setColor(1, 0.3, 0.3)  -- Red for hazard
-        love.graphics.print("⚠️ IN HAZARD ZONE!", baseX, 100)
+        love.graphics.print("IN HAZARD ZONE!", baseX, 110)
     end
 end
 
