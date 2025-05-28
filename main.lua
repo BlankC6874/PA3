@@ -8,12 +8,15 @@ local Parts = require("src.parts")  -- if not already
 local Pickup = require("src.pickup")
 
 -- Self-defined constants
-local gameWon = false
+local puzzleSolved = false
+local droneDead = false
 
 -- love.load is called once at the start of the game
 function love.load()
     drone = Drone.new()
     grid = Grid.new(10, 8, 64) -- 10x8 tiles, each 64px
+    require("src.grid").instance = grid -- global reference for UI use
+
     pickups = {
     Pickup.new(5, 5, "tool", "solder"),
     Pickup.new(7, 2, "chassis", "heavy")
@@ -35,7 +38,7 @@ function love.update(dt)
     -- WIN CONDITION
     local tx, ty = 7, 4 -- assuming target tile is at (7, 4)
 
-    if not gameWon and grid.tiles[ty] and grid.tiles[ty][tx] == Grid.TILE.target then
+    if not puzzleSolved and grid.tiles[ty] and grid.tiles[ty][tx] == Grid.TILE.target then
         -- check if neighbor is powered
         local neighbors = {
             {x = tx - 1, y = ty}, -- <- (6,4)
@@ -47,10 +50,16 @@ function love.update(dt)
         for _, n in ipairs(neighbors) do
             if grid.tiles[n.y] and grid.tiles[n.y][n.x] == Grid.TILE.powered then
                 print("Puzzle Solved!")
-                gameWon = true
+                puzzleSolved = true
                 break
             end
         end
+    end
+
+    -- HAZARD CHECK
+    if not puzzleSolved and not droneDead and drone:isInHazard(grid) then
+        print("Drone destroyed by hazard at", drone.x, drone.y)
+        droneDead = true
     end
 end
 
@@ -63,10 +72,16 @@ function love.draw()
     end
     drone:drawUI()
 
-    if gameWon then
+    local screenHeight = love.graphics.getHeight()
+
+    if droneDead then
+        love.graphics.setColor(1, 0.3, 0.3)
+        love.graphics.print("Drone destroyed!", 10, screenHeight - 50)
+    end
+
+    if puzzleSolved then
         love.graphics.setColor(0, 1, 0)
-        local screenHeight = love.graphics.getHeight()
-        love.graphics.print("✅ Circuit Repaired!", 10, screenHeight - 30)
+        love.graphics.print("Circuit Repaired!", 10, screenHeight - 30)
     end
 end
 

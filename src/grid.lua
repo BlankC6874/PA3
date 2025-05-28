@@ -13,6 +13,7 @@ local TILE = {
     powered = 4,
     broken = 5, -- repairable tile
     diodeR = 6, -- right-pointing diode
+    hazard = 7, -- hazard tile
 }
 
 -- Make it accessible outside this file
@@ -35,6 +36,8 @@ function Grid.new(cols, rows, tileSize)
     end
 
     -- puzzle layout [y][x]
+    self.tiles[4][3] = TILE.hazard -- for testing
+
     self.tiles[4][4] = TILE.source
     self.tiles[4][5] = TILE.broken
     self.tiles[4][6] = TILE.diodeR
@@ -58,27 +61,30 @@ function Grid:draw()
             local tx, ty = (x - 1) * self.tileSize, (y - 1) * self.tileSize
             local t = self.tiles[y][x]
             if t == TILE.source then
-                love.graphics.setColor(1, 1, 0)
+                love.graphics.setColor(1, 1, 0) -- Yellow
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             elseif t == TILE.wire then
-                love.graphics.setColor(0.6, 0.6, 0.6)
+                love.graphics.setColor(0.6, 0.6, 0.6) -- Grey
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             elseif t == TILE.powered then
-                love.graphics.setColor(0, 1, 0)
+                love.graphics.setColor(0, 1, 0) -- Green
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             elseif t == TILE.target then
-                love.graphics.setColor(1, 0, 0)
+                love.graphics.setColor(1, 0, 0) -- Red
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             elseif t == TILE.broken then
-                love.graphics.setColor(1, 0.5, 0)
+                love.graphics.setColor(1, 0.5, 0) -- Orange
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             elseif t == TILE.diodeR then
-                love.graphics.setColor(0.3, 0.3, 1)
+                love.graphics.setColor(0.3, 0.3, 1) -- Blue
                 love.graphics.polygon("fill",
                     tx + 16, ty + 16,
                     tx + 48, ty + 32,
                     tx + 16, ty + 48
                 )
+            elseif t == TILE.hazard then
+                love.graphics.setColor(0.6, 1, 0) -- Yellow-Green
+                love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             end
         end
     end

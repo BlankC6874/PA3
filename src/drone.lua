@@ -42,7 +42,12 @@ function Drone:update(dt)
             self.highlightTimers[k] = math.max(0, t - dt)
         end
     end
+
     -- future: add timed hazards or cooldowns
+    function Drone:isInHazard(grid)
+        local x, y = self.x, self.y
+        return grid.tiles[y] and grid.tiles[y][x] == require("src.grid").TILE.hazard
+    end
 end
 
 -- Speed is determined by the chassis part
@@ -102,6 +107,12 @@ function Drone:drawUI()
     self:printWithFlash("Chassis: " .. self:getPartName("chassis"), baseX, 30, self.highlightTimers.chassis)
     self:printWithFlash("Tool: " .. self:getPartName("tool"), baseX, 50, self.highlightTimers.tool)
     self:printWithFlash("Chip: " .. self:getPartName("chip"), baseX, 70, self.highlightTimers.chip)
+
+    -- Hazard warning
+    if self:isInHazard(require("src.grid").instance) then
+        love.graphics.setColor(1, 0.3, 0.3)  -- Red for hazard
+        love.graphics.print("⚠️ IN HAZARD ZONE!", baseX, 100)
+    end
 end
 
 -- Print text with a flashing effect based on the timer
