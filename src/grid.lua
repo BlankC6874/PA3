@@ -14,6 +14,7 @@ local TILE = {
     broken = 5, -- repairable tile
     diodeR = 6, -- right-pointing diode
     hazard = 7, -- hazard tile
+    wall = 8, -- wall tile
 }
 
 -- Make it accessible outside this file
@@ -36,6 +37,9 @@ function Grid.new(cols, rows, tileSize)
     end
 
     -- puzzle layout [y][x]
+    self.tiles[3][4] = TILE.wall
+    self.tiles[4][2] = TILE.wall
+
     self.tiles[4][3] = TILE.hazard -- for testing
 
     self.tiles[4][4] = TILE.source
@@ -85,9 +89,22 @@ function Grid:draw()
             elseif t == TILE.hazard then
                 love.graphics.setColor(0.6, 1, 0) -- Yellow-Green
                 love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
+            elseif t == TILE.wall then
+                love.graphics.setColor(0.5, 0.5, 0.5) -- Dark Grey
+                love.graphics.rectangle("fill", tx, ty, self.tileSize, self.tileSize)
             end
         end
     end
+end
+
+-- Wall Collision Detection
+function Grid:isBlocked(x, y)
+    if x < 1 or x > self.cols or y < 1 or y > self.rows then
+        return true
+    end
+
+    local t = self.tiles[y][x]
+    return t == Grid.TILE.wall
 end
 
 -- When a wire is powered, check whether it's connected to a source,

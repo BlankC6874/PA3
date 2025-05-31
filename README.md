@@ -30,6 +30,7 @@ You control a modular repair drone that must restore power to damaged circuits w
 - conf.lua – LÖVE configuration
 - src/
     - drone.lua – Player drone logic and UI
+	- enemy.lua - Enemy movement logic
 	- grid.lua – Tile grid system and power propagation
 	- parts.lua – Drone part definitions (chassis, tools, chips)
 	- pickup.lua – Part pickup system

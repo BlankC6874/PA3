@@ -43,9 +43,12 @@ function Enemy:update(dt, grid)
     for _, dir in ipairs(directions) do
         local nx, ny = self.x + dir.x, self.y + dir.y
         if nx >= 1 and nx <= grid.cols and ny >= 1 and ny <= grid.rows then
-            self.x, self.y = nx, ny
+            if not grid:isBlocked(nx, ny) then
+                self.x = nx
+                self.y = ny
+            end
 
-            -- Optional: destroy powered tiles
+            -- destroy powered tiles
             local tile = grid.tiles[ny][nx]
             if tile == grid.TILE.powered then
                 grid.tiles[ny][nx] = grid.TILE.broken

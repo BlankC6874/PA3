@@ -195,6 +195,20 @@ function love.keypressed(key)
         end
     end
 
+    -- wall destroy action if equipped
+    if key == "c" and drone.parts.tool.action == "cut" then
+        local fx, fy = drone.x, drone.y
+        if drone.facing == "up" then fy = fy - 1 end
+        if drone.facing == "down" then fy = fy + 1 end
+        if drone.facing == "left" then fx = fx - 1 end
+        if drone.facing == "right" then fx = fx + 1 end
+
+        if grid.tiles[fy] and grid.tiles[fy][fx] == grid.TILE.wall then
+            grid.tiles[fy][fx] = grid.TILE.empty
+            print("Wall destroyed at", fx, fy)
+        end
+    end
+
     -- Print current tile information every time you move
     local dx, dy = drone.x, drone.y
     local tile = grid.tiles[dy][dx]

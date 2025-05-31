@@ -16,7 +16,8 @@ function Drone.new()
     self.x, self.y = 2, 2
     self.baseSpeed = 1
     self.color = {0, 1, 0}
-    self. lives = 3  -- Number of lives
+    self.lives = 3  -- Number of lives
+    self.facing = "down"  -- Initial facing direction
 
     -- parts cooldown timers
     self.empCooldown = 0   -- current cooldown time
@@ -78,13 +79,38 @@ end
 -- Handle key presses for movement and actions
 function Drone:keypressed(key)
     local moveSpeed = self:getSpeed()
-    if key == "up" then self.y = math.max(1, self.y - moveSpeed) end
-    if key == "down" then self.y = math.min(8, self.y + moveSpeed) end
-    if key == "left" then self.x = math.max(1, self.x - moveSpeed) end
-    if key == "right" then self.x = math.min(10, self.x + moveSpeed) end
-    if key == "space" then
-        print("Using tool:", self.parts.tool.action)
+
+    if key == "up" then 
+        self.facing = "up"
+        if not grid:isBlocked(self.x, self.y - 1) then
+            self.y = math.max(1, self.y - moveSpeed) 
+        end
     end
+
+    if key == "down" then 
+        self.facing = "down"
+        if not grid:isBlocked(self.x, self.y - 1) then
+            self.y = math.min(8, self.y + moveSpeed)
+        end 
+    end
+
+    if key == "left" then 
+        self.facing = "left"
+        if not grid:isBlocked(self.x - 1, self.y) then
+            self.x = math.max(1, self.x - moveSpeed)
+        end
+    end
+
+    if key == "right" then 
+        self.facing = "right"
+        if not grid:isBlocked(self.x + 1, self.y) then
+            self.x = math.min(10, self.x + moveSpeed)
+        end
+    end
+
+    -- if key == "space" then
+        -- print("Using tool:", self.parts.tool.action)
+    -- end
 end
 
 -- Draw the drone at its current position, with a flashing grey edge
