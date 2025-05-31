@@ -18,6 +18,10 @@ function Drone.new()
     self.color = {0, 1, 0}
     self. lives = 3  -- Number of lives
 
+    -- parts cooldown timers
+    self.empCooldown = 0   -- current cooldown time
+    self.empCooldownMax = 5  -- 5 seconds between uses
+
     -- Equip default parts
     self.parts = {
         chassis = Parts.catalog.chassis.light,
@@ -44,10 +48,15 @@ function Drone:update(dt)
         end
     end
 
-    -- future: add timed hazards or cooldowns
+    -- Check for hazards in the grid
     function Drone:isInHazard(grid)
         local x, y = self.x, self.y
         return grid.tiles[y] and grid.tiles[y][x] == require("src.grid").TILE.hazard
+    end
+
+    -- Handle EMP cooldown
+    if self.empCooldown > 0 then
+        self.empCooldown = math.max(0, self.empCooldown - dt)
     end
 end
 
@@ -97,7 +106,7 @@ function Drone:draw()
     love.graphics.setColor(1, 1, 1)  -- Reset color
 end
 
--- Draw the UI for equipped parts
+-- Draw the UI for equipped parts & anything drone-related
 function Drone:drawUI()
     local screenWidth = love.graphics.getWidth()
     local baseX = screenWidth - 150  -- adjust if needed
@@ -115,6 +124,26 @@ function Drone:drawUI()
     if self:isInHazard(require("src.grid").instance) then
         love.graphics.setColor(1, 0.3, 0.3)  -- Red for hazard
         love.graphics.print("IN HAZARD ZONE!", baseX, 110)
+    end
+
+    -- EMP cooldown display
+    if self.parts.tool.action == "stun" then
+        local cd = self.empCooldown
+        local msg = cd > 0 and ("EMP Cooldown: " .. string.format("%.1f", cd) .. "s") or "EMP Ready"
+        love.graphics.print(msg, baseX, 120)
+
+        -- Check if any enemy is stunned
+        local stunned = false
+        for _, enemy in ipairs(enemies) do
+            if enemy.stunned and enemy.stunned > 0 then
+                stunned = true
+                break
+            end
+        end
+        -- Display enemy stun status
+        if stunned then
+            love.graphics.print("Enemy stunned", baseX, 140)
+        end
     end
 end
 
