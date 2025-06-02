@@ -16,11 +16,24 @@ You control a modular repair drone that must restore power to damaged circuits w
 
 ---
 
-## 🔧 Controls
+## 🔧 Controls & Parts
 
 - Arrow keys: Move the drone
-- `Space`: Use equipped tool (e.g., solder)
+- `Space`: Use equipped (by pick-up) SOLDER tool
+- `C`: Use equipped (by default) CUTTER tool
+- `E`: Use equipped (by pick-up) EMP Tool
 - `R`: Restart the current level
+
+- **Chasis:**
+	- light **(DEFAULT)**: Fast movement speed (2), low armor (1)
+	- heavy (pick-up): Slower movement (1), but higher durability (3)
+- **Tools**
+	- cutter **(DEFAULT)**: Destroys wall tiles when used while facing them (C key)
+	- solder (pick-up): Repairs broken wires and powers up circuits (Space key)
+	- emp (pick-up): Temporarily stuns all enemies with an area-wide shock (E key), includes cooldown of 5s
+- **Chips**
+	- basic **(DEFAULT)**: Default chip with 3 HP/Lives
+	- navChip (planned): FUTURE
 
 ---
 
