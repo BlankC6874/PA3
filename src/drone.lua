@@ -78,39 +78,39 @@ end
 
 -- Handle key presses for movement and actions
 function Drone:keypressed(key)
+    if loopTimer then return end
     local moveSpeed = self:getSpeed()
 
-    if key == "up" then 
+    local dx, dy = 0, 0
+    if key == "up" then
         self.facing = "up"
-        if not grid:isBlocked(self.x, self.y - 1) then
-            self.y = math.max(1, self.y - moveSpeed) 
-        end
-    end
-
-    if key == "down" then 
+        dy = -1
+    elseif key == "down" then
         self.facing = "down"
-        if not grid:isBlocked(self.x, self.y - 1) then
-            self.y = math.min(8, self.y + moveSpeed)
-        end 
-    end
-
-    if key == "left" then 
+        dy = 1
+    elseif key == "left" then
         self.facing = "left"
-        if not grid:isBlocked(self.x - 1, self.y) then
-            self.x = math.max(1, self.x - moveSpeed)
-        end
-    end
-
-    if key == "right" then 
+        dx = -1
+    elseif key == "right" then
         self.facing = "right"
-        if not grid:isBlocked(self.x + 1, self.y) then
-            self.x = math.min(10, self.x + moveSpeed)
-        end
+        dx = 1
     end
 
-    -- if key == "space" then
-        -- print("Using tool:", self.parts.tool.action)
-    -- end
+    for step = 1, moveSpeed do
+        local nextX = self.x + dx
+        local nextY = self.y + dy
+
+        if nextX < 1 or nextX > grid.cols or nextY < 1 or nextY > grid.rows then
+            break -- hit edge of grid
+        end
+
+        if grid:isBlocked(nextX, nextY) then
+            break -- hit wall
+        end
+
+        self.x = nextX
+        self.y = nextY
+    end
 end
 
 -- Draw the drone at its current position, with a flashing grey edge

@@ -14,7 +14,9 @@ function Enemy.new(x, y)
     return self
 end
 
-function Enemy:update(dt, grid)
+function Enemy:update(dt, grid, loopTimer)
+    if loopTimer then return end -- if loopTimer is set, the game is in a reset state, skip updates
+
     -- stun logic (by suchas EMP)
     if self.stunned and self.stunned > 0 then
         self.stunned = self.stunned - dt

@@ -13,15 +13,19 @@ local puzzleSolved = false
 local droneDead = false
 local lastHazardX, lastHazardY = nil, nil
 
+-- game state timers
 local waveTimer = 0 -- Timer for enemy waves
 local waveInterval = 10 -- seconds between enemy waves
+
+local loopTimer = nil -- Timer for restart game loop after puzzle solved
+local loopDelay = 3 -- when loopTimer starts and reaches this value, the game resets
 
 -- love.load is called once at the start of the game
 function love.load()
     drone = Drone.new()
 
     enemies = {
-        Enemy.new(1,1),
+        Enemy.new(10,8),
         -- add more enemies as needed here
     }
 
@@ -43,7 +47,7 @@ function love.update(dt)
 
     -- update enemy state
     for _, enemy in ipairs(enemies) do
-        enemy:update(dt, grid)  -- targetX, targetY (adjust to match actual target)
+        enemy:update(dt, grid, loopTimer)  -- targetX, targetY, pass loopTimer to enemy.lua
     end
 
     -- pickups collectible logic
@@ -54,6 +58,25 @@ function love.update(dt)
         end
     end
 
+    -- Damage HERE
+    -- hazard tile logic
+    if not puzzleSolved and not droneDead then
+        local dx, dy = drone.x, drone.y
+        if drone:isInHazard(grid) then
+            if lastHazardX ~= dx or lastHazardY ~= dy then
+                drone.lives = drone.lives - 1
+                lastHazardX, lastHazardY = dx, dy
+                print("Drone damaged from hazard! Lives left:", drone.lives)
+
+                if drone.lives <= 0 then
+                    droneDead = true
+                    loopTimer = 0 -- Start the loop countdown
+                end
+            end
+        else
+            lastHazardX, lastHazardY = nil, nil  -- Reset when leaving hazard
+        end
+    end
     -- enemy contact dagame logic
     for _, enemy in ipairs(enemies) do
         if enemy.x == drone.x and enemy.y == drone.y and not enemy.hasDamaged and not droneDead and not puzzleSolved then
@@ -63,9 +86,10 @@ function love.update(dt)
 
             if drone.lives <= 0 then
                 droneDead = true
+                loopTimer = 0 -- Start the loop countdown
             end
         elseif enemy.x ~= drone.x or enemy.y ~= drone.y then
-            enemy.hasDamaged = false  -- Reset when no longer overlapping
+            enemy.hasDamaged = false -- Reset when no longer overlapping
         end
     end
 
@@ -85,26 +109,9 @@ function love.update(dt)
             if grid.tiles[n.y] and grid.tiles[n.y][n.x] == Grid.TILE.powered then
                 print("Puzzle Solved!")
                 puzzleSolved = true
+                loopTimer = 0 -- Start the loop countdown
                 break
             end
-        end
-    end
-
-    -- HAZARD CHECK: Lose 1 life per enter hazard tile
-    if not puzzleSolved and not droneDead then
-        local dx, dy = drone.x, drone.y
-        if drone:isInHazard(grid) then
-            if lastHazardX ~= dx or lastHazardY ~= dy then
-                drone.lives = drone.lives - 1
-                lastHazardX, lastHazardY = dx, dy
-                print("Drone damaged from hazard! Lives left:", drone.lives)
-
-                if drone.lives <= 0 then
-                    droneDead = true
-                end
-            end
-        else
-            lastHazardX, lastHazardY = nil, nil  -- Reset when leaving hazard
         end
     end
 
@@ -112,8 +119,38 @@ function love.update(dt)
     waveTimer = waveTimer + dt
     if waveTimer >= waveInterval then
         waveTimer = 0
-        table.insert(enemies, Enemy.new(1, 1))  -- or random spawn
+        table.insert(enemies, Enemy.new(10, 8))  -- or random spawn
         print("New enemy spawned!")
+    end
+
+    -- game loop after puzzle solved
+    if puzzleSolved and loopTimer then
+        loopTimer = loopTimer + dt
+        if loopTimer >= loopDelay then
+            loopTimer = nil
+
+            -- Do the same reset as 'R' is pressed
+            puzzleSolved = false
+            droneDead = false
+            lastHazardX, lastHazardY = nil, nil
+            love.load()
+            print("Game looped automatically after win")
+        end
+    end
+
+    -- game loop after drone destroyed
+    if droneDead and loopTimer then
+        loopTimer = loopTimer + dt
+        if loopTimer >= loopDelay then
+            loopTimer = nil
+
+            -- Do the same reset as 'R' is pressed
+            puzzleSolved = false
+            droneDead = false
+            lastHazardX, lastHazardY = nil, nil
+            love.load()
+            print("Game looped automatically after drone destroyed")
+        end
     end
 end
 
@@ -145,11 +182,32 @@ function love.draw()
         love.graphics.setColor(0, 1, 0)
         love.graphics.print("Circuit Repaired!", 10, screenHeight - 30)
     end
+
+    -- Draw message box (automatically disappear) after puzzle solved
+    if loopTimer then
+        local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+        local boxWidth, boxHeight = 300, 80
+        local boxX = (w - boxWidth) / 2
+        local boxY = (h - boxHeight) / 2
+
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.rectangle("fill", boxX, boxY, boxWidth, boxHeight, 10, 10)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, 10, 10)
+
+        if droneDead then
+            love.graphics.printf("Mission Failed. Restarting...", boxX, boxY + 28, boxWidth, "center")
+        elseif puzzleSolved then
+            love.graphics.printf("Mission Successful. Restarting...", boxX, boxY + 28, boxWidth, "center")
+        end
+    end
 end
 
 -- love.keypressed is called when a key is bound to an action
 function love.keypressed(key)
-    drone:keypressed(key)
+    if loopTimer then return end  -- Disable all key actions during loop countdown
+    drone:keypressed(key) -- Call the drone's keypressed function
 
     -- restart the game if 'r' is pressed
     if key == "r" then
@@ -203,9 +261,19 @@ function love.keypressed(key)
         if drone.facing == "left" then fx = fx - 1 end
         if drone.facing == "right" then fx = fx + 1 end
 
-        if grid.tiles[fy] and grid.tiles[fy][fx] == grid.TILE.wall then
-            grid.tiles[fy][fx] = grid.TILE.empty
+        if fx < 1 or fx > grid.cols or fy < 1 or fy > grid.rows then
+            print("Cutter target out of bounds at", fx, fy)
+            return
+        end
+
+        local target = grid.tiles[fy] and grid.tiles[fy][fx]
+        print("Cutter checking tile:", fx, fy, "Type:", target)
+
+        if target == Grid.TILE.wall then
+            grid.tiles[fy][fx] = Grid.TILE.empty
             print("Wall destroyed at", fx, fy)
+        else
+            print("No wall to cut at", fx, fy)
         end
     end
 

@@ -36,12 +36,38 @@ function Grid.new(cols, rows, tileSize)
         end
     end
 
-    -- puzzle layout [y][x]
+    -- puzzle layout [y][x] -- design the grid map here
+    -- HAZARD TILES
+    self.tiles[1][4] = TILE.hazard
+    self.tiles[1][5] = TILE.hazard
+    self.tiles[1][6] = TILE.hazard
+    self.tiles[1][7] = TILE.hazard
+    self.tiles[6][4] = TILE.hazard
+    self.tiles[6][5] = TILE.hazard
+    self.tiles[6][6] = TILE.hazard
+    self.tiles[6][7] = TILE.hazard
+    self.tiles[8][4] = TILE.hazard
+    self.tiles[8][5] = TILE.hazard
+    self.tiles[8][6] = TILE.hazard
+    self.tiles[8][7] = TILE.hazard
+
+    -- WALL TILES
+    self.tiles[3][3] = TILE.wall
     self.tiles[3][4] = TILE.wall
-    self.tiles[4][2] = TILE.wall
+    self.tiles[3][5] = TILE.wall
+    self.tiles[3][6] = TILE.wall
+    self.tiles[3][7] = TILE.wall
+    self.tiles[3][8] = TILE.wall
+    self.tiles[4][3] = TILE.wall
+    self.tiles[4][8] = TILE.wall
+    self.tiles[5][3] = TILE.wall
+    self.tiles[5][4] = TILE.wall
+    self.tiles[5][5] = TILE.wall
+    self.tiles[5][6] = TILE.wall
+    self.tiles[5][7] = TILE.wall
+    self.tiles[5][8] = TILE.wall
 
-    self.tiles[4][3] = TILE.hazard -- for testing
-
+    -- PUZZLE TILES
     self.tiles[4][4] = TILE.source
     self.tiles[4][5] = TILE.broken
     self.tiles[4][6] = TILE.diodeR
